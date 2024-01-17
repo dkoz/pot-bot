@@ -30,7 +30,7 @@ class RconCog(commands.Cog):
         choices = [server for server in self.servers if current.lower() in server.lower()]
         await interaction.response.send_autocomplete(choices)
 
-    @nextcord.slash_command(description="Main Path of Titans server command.")
+    @nextcord.slash_command(description="Main Path of Titans server command.", default_member_permissions=nextcord.Permissions(administrator=True))
     async def rcon(self, interaction: nextcord.Interaction):
         pass
 

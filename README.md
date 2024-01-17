@@ -10,6 +10,7 @@ You need to rename the `.env.example` to `.env` when you fill out the required f
 ```
 BOT_TOKEN='TOKEN_HERE'
 BOT_PREFIX=!
+BOT_STATUS='the Server'
 ```
 
 ## Server Configuration

@@ -10,6 +10,8 @@ bot = commands.Bot(command_prefix=config.bot_prefix, intents=intents)
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
+    activity = nextcord.Activity(type=nextcord.ActivityType.watching, name=config.bot_status)
+    await bot.change_presence(activity=activity)
 
 @bot.command(name='ping', help='Returns the latency of the bot.')
 async def ping(ctx):
