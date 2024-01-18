@@ -3,6 +3,7 @@ import os
 import nextcord
 from nextcord.ext import commands
 from gamercon_async import GameRCON
+import config
 
 class RconCog(commands.Cog):
     def __init__(self, bot):
@@ -37,7 +38,12 @@ class RconCog(commands.Cog):
     @rcon.subcommand(description="Send a remote rcon command to Path of Titans server.")
     async def command(self, interaction: nextcord.Interaction, command: str, server: str = nextcord.SlashOption(description="Select a server", autocomplete=True)):
         response = await self.rcon_command(server, command)
-        await interaction.response.send_message(f'Response: {response}')
+        
+        embed = nextcord.Embed(title=server, color=nextcord.Color.green())
+        embed.description = f"**Response:** {response}"
+        embed.set_footer(text=config.footer + " | " + config.version, icon_url=self.bot.user.avatar.url)
+
+        await interaction.response.send_message(embed=embed)
 
     @command.on_autocomplete("server")
     async def on_autocomplete_rcon(self, interaction: nextcord.Interaction, current: str):
