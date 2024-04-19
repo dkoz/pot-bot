@@ -10,7 +10,6 @@ You need to rename the `.env.example` to `.env` when you fill out the required f
 ```
 BOT_TOKEN='TOKEN_HERE'
 BOT_PREFIX=!
-BOT_STATUS='the Server'
 ```
 
 ## Server Configuration
@@ -18,21 +17,16 @@ This is an example RCON configuration for your servers.
 ```
 {
     "RCON_SERVERS": {
-        "Server Name": {
+        "My Server": {
             "RCON_HOST": "127.0.0.1",
-            "RCON_PORT": 27025,
-            "RCON_PASS": "RconPasword",
-            "HOST_PORT": 7777,
-            "QUERY_PORT": 7781
-        },
-        "Second Server": {
-            "RCON_HOST": "127.0.0.1",
-            "RCON_PORT": 27030,
-            "RCON_PASS": "AnotherPassword",
-            "HOST_PORT": 7778,
-            "QUERY_PORT": 7782
+            "RCON_PORT": 7779,
+            "RCON_PASS": "examplePass",
+            "QUERY_PORT": 7778
         }
-    }
+    },
+    "WEATHER_CHANNEL": 12345678,
+    "WEATHER_REPORT": 12345678,
+    "WEATHER_PATTERN": 12345678
 }
 ```
 ## Installation

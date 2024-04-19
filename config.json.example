@@ -1,0 +1,13 @@
+{
+    "RCON_SERVERS": {
+        "My Server": {
+            "RCON_HOST": "127.0.0.1",
+            "RCON_PORT": 7779,
+            "RCON_PASS": "examplePass",
+            "QUERY_PORT": 7778
+        }
+    },
+    "WEATHER_CHANNEL": 12345678,
+    "WEATHER_REPORT": 12345678,
+    "WEATHER_PATTERN": 12345678
+}
