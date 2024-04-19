@@ -1,53 +1,54 @@
 import json
-import os
-import nextcord
-from nextcord.ext import commands
+import discord
+from discord.ext import commands
+from discord import app_commands
 from gamercon_async import GameRCON
-import config
+import asyncio
+import logging
 
 class RconCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.load_config()
+        self.server_config = self.load_config()
 
     def load_config(self):
-        config_path = os.path.join('data', 'config.json')
-        with open(config_path) as config_file:
-            config = json.load(config_file)
-            self.servers = config["RCON_SERVERS"]
+        with open('config.json', 'r') as f:
+            return json.load(f)
 
     async def rcon_command(self, server_name, command):
-        server = self.servers.get(server_name)
+        server = self.server_config["RCON_SERVERS"].get(server_name)
         if not server:
-            return f"Server '{server_name}' not found."
+            logging.error(f"Server not found: {server_name}")
+            return "Server not found."
+        async with GameRCON(server["RCON_HOST"], server["RCON_PORT"], server["RCON_PASS"]) as pc:
+            try:
+                return await asyncio.wait_for(pc.send(command), timeout=10.0)
+            except asyncio.TimeoutError:
+                logging.error(f"Command timed out: {server_name} {command}")
+                return "Command timed out."
+            except Exception as e:
+                logging.error(f"Error sending command: {e}")
+                return f"Error sending command: {e}"
 
-        try:
-            async with GameRCON(server["RCON_HOST"], server["RCON_PORT"], server["RCON_PASS"]) as pc:
-                return await pc.send(command)
-        except Exception as error:
-            return f"Error sending command: {error}"
+    async def server_autocomplete(self, interaction: discord.Interaction, current: str):
+        server_names = [name for name in self.server_config["RCON_SERVERS"] if current.lower() in name.lower()]
+        choices = [app_commands.Choice(name=name, value=name) for name in server_names]
+        
+        return choices
+    
+    group = app_commands.Group(name="rcon", description="Remote console command sender", default_permissions=discord.Permissions(administrator=True))
 
-    async def autocomplete_server(self, interaction: nextcord.Interaction, current: str):
-        choices = [server for server in self.servers if current.lower() in server.lower()]
-        await interaction.response.send_autocomplete(choices)
+    @group.command(name="command", description="Send a remote RCON command to a server.")
+    @app_commands.autocomplete(server=server_autocomplete)
+    @app_commands.describe(command="The command to send", server="The server to send the command to.")
+    async def command(self, interaction: discord.Interaction, command: str, server: str):
+        await interaction.response.defer(ephemeral=True)
 
-    @nextcord.slash_command(description="Main Path of Titans server command.", default_member_permissions=nextcord.Permissions(administrator=True))
-    async def rcon(self, interaction: nextcord.Interaction):
-        pass
-
-    @rcon.subcommand(description="Send a remote rcon command to Path of Titans server.")
-    async def command(self, interaction: nextcord.Interaction, command: str, server: str = nextcord.SlashOption(description="Select a server", autocomplete=True)):
         response = await self.rcon_command(server, command)
         
-        embed = nextcord.Embed(title=server, color=nextcord.Color.green())
+        embed = discord.Embed(title=server, color=discord.Color.green())
         embed.description = f"**Response:** {response}"
-        embed.set_footer(text=config.footer + " | " + config.version, icon_url=self.bot.user.avatar.url)
+        await interaction.followup.send(embed=embed)
 
-        await interaction.response.send_message(embed=embed)
-
-    @command.on_autocomplete("server")
-    async def on_autocomplete_rcon(self, interaction: nextcord.Interaction, current: str):
-        await self.autocomplete_server(interaction, current)
-
-def setup(bot):
-    bot.add_cog(RconCog(bot))
+async def setup(bot):
+    await bot.add_cog(RconCog(bot))

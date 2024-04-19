@@ -1,24 +1,56 @@
-import nextcord
-from nextcord.ext import commands
-import config
+import discord
+from discord.ext import commands
+import settings
 import os
+import logging
 
-intents = nextcord.Intents.all()
-bot = commands.Bot(command_prefix=config.bot_prefix, intents=intents)
+logging.basicConfig(level=logging.INFO, filename='bot.log', format='%(asctime)s:%(levelname)s:%(name)s: %(message)s')
 
-@bot.event
-async def on_ready():
-    print(f'{bot.user} has connected to Discord!')
-    activity = nextcord.Activity(type=nextcord.ActivityType.watching, name=config.bot_status)
-    await bot.change_presence(activity=activity)
+intents = discord.Intents.default()
+intents.message_content = True
 
-@bot.command(name='ping', help='Returns the latency of the bot.')
+bot = commands.Bot(command_prefix=settings.bot_prefix, intents=intents)
+
+@bot.command()
 async def ping(ctx):
     await ctx.send(f'Pong! {round(bot.latency * 1000)}ms')
 
+@bot.group()
+async def app(ctx):
+    if ctx.invoked_subcommand is None:
+        await ctx.send('Invalid app command passed...')
+
+async def setup_hook():
+    for filename in os.listdir("./cogs"):
+        if filename.endswith(".py"):
+            extension = f"cogs.{filename[:-3]}"
+            await bot.load_extension(extension)
+    await bot.tree.sync()
+
+bot.setup_hook = setup_hook
+
+@bot.event
+async def on_ready():
+    ascii_art = r"""
+█ ▄▄  ██     ▄▄▄▄▀ ▄  █     ████▄ ▄████    
+█   █ █ █ ▀▀▀ █   █   █     █   █ █▀   ▀   
+█▀▀▀  █▄▄█    █   ██▀▀█     █   █ █▀▀      
+█     █  █   █    █   █     ▀████ █        
+ █       █  ▀        █             █       
+  ▀     █           ▀               ▀      
+       ▀                                   
+   ▄▄▄▄▀ ▄█    ▄▄▄▄▀ ██      ▄      ▄▄▄▄▄  
+▀▀▀ █    ██ ▀▀▀ █    █ █      █    █     ▀▄
+    █    ██     █    █▄▄█ ██   █ ▄  ▀▀▀▀▄  
+   █     ▐█    █     █  █ █ █  █  ▀▄▄▄▄▀   
+  ▀       ▐   ▀         █ █  █ █           
+                       █  █   ██           
+                      ▀                    
+    """
+    print(ascii_art)
+    print(f'Bot is ready! Logged in as {bot.user} (ID: {bot.user.id})')
+    await bot.change_presence(activity=discord.Game(name="Path of Titans"))
+
+
 if __name__ == '__main__':
-    # Simplified cog loading
-    for filename in os.listdir('./cogs'):
-        if filename.endswith('.py'):
-            bot.load_extension(f'cogs.{filename[:-3]}')
-    bot.run(config.bot_token)
+    bot.run(settings.bot_token)

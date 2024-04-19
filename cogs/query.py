@@ -1,49 +1,47 @@
-import nextcord
-from nextcord.ext import commands
+import discord
+from discord.ext import commands
+from discord import app_commands
 import json
-import os
 import a2s
-import config
+import logging
 
 class QueryCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.load_config()
+        self.server_config = self.load_config()
 
     def load_config(self):
-        config_path = os.path.join('data', 'config.json')
-        with open(config_path) as config_file:
-            config = json.load(config_file)
-            self.servers = config["RCON_SERVERS"]
+        with open('config.json', 'r') as f:
+            return json.load(f)
 
-    async def autocomplete_server(self, interaction: nextcord.Interaction, current: str):
-        choices = [server for server in self.servers if current.lower() in server.lower()]
-        await interaction.response.send_autocomplete(choices)
+    async def server_autocomplete(self, interaction: discord.Interaction, current: str):
+        server_names = [name for name in self.server_config["RCON_SERVERS"] if current.lower() in name.lower()]
+        choices = [app_commands.Choice(name=name, value=name) for name in server_names]
+        return choices
 
-    @nextcord.slash_command(name="query", description="Query a game server's status")
-    async def query(self, interaction: nextcord.Interaction, server_name: str = nextcord.SlashOption(description="Select a server", autocomplete=True)):
-        server_info = self.servers.get(server_name)
+    group = app_commands.Group(name="query", description="Query game server status", default_permissions=discord.Permissions(administrator=True))
+
+    @group.command(name="status", description="Query a game server's status.")
+    @app_commands.autocomplete(server=server_autocomplete)
+    @app_commands.describe(server="The server to query.")
+    async def status(self, interaction: discord.Interaction, server: str):
+        server_info = self.server_config["RCON_SERVERS"].get(server)
         if server_info:
             try:
                 address = (server_info["RCON_HOST"], server_info["QUERY_PORT"])
                 info = a2s.info(address)
-                embed = nextcord.Embed(title=server_name + " Status", color=nextcord.Color.blue())
+                embed = discord.Embed(title=f"{server} Status", color=discord.Color.blue())
                 embed.add_field(name="Server Name", value=info.server_name, inline=False)
                 embed.add_field(name="Map", value=info.map_name, inline=True)
                 embed.add_field(name="Players", value=f"{info.player_count}/{info.max_players}", inline=True)
                 embed.add_field(name="Game", value=info.game, inline=True)
                 embed.add_field(name="Address", value=f"{server_info['RCON_HOST']}:{server_info['QUERY_PORT']}", inline=False)
-                embed.set_thumbnail(url="https://i.imgur.com/830cdKn.png")
-                embed.set_footer(text=config.footer + " | " + config.version, icon_url=self.bot.user.avatar.url)
                 await interaction.response.send_message(embed=embed)
             except Exception as e:
-                await interaction.response.send_message(f"Error querying server: {e}")
+                logging.error(f"Error querying server: {e}")
+                await interaction.response.send_message(f"Error querying server: {e}", ephemeral=True)
         else:
-            await interaction.response.send_message("Server not found.")
+            await interaction.response.send_message("Server not found.", ephemeral=True)
 
-    @query.on_autocomplete("server_name")
-    async def on_autocomplete_rcon(self, interaction: nextcord.Interaction, current: str):
-        await self.autocomplete_server(interaction, current)
-
-def setup(bot):
-    bot.add_cog(QueryCog(bot))
+async def setup(bot):
+    await bot.add_cog(QueryCog(bot))
