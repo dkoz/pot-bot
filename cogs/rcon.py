@@ -3,7 +3,6 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from utils.rcon_protocol import rcon_command
-import logging
 
 class RconCog(commands.Cog):
     def __init__(self, bot):
