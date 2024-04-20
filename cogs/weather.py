@@ -2,7 +2,7 @@ import json
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
-from gamercon_async import GameRCON
+from utils.rcon_protocol import rcon_command
 from utils.weather_forecast import get_weather_update
 import asyncio
 import os
@@ -56,21 +56,6 @@ class WeatherControlCog(commands.Cog):
         with open(self.data_path, 'w') as f:
             json.dump({'current_season': season, 'current_server': server}, f)
 
-    async def rcon_command(self, server_name, command):
-        server = self.server_config["RCON_SERVERS"].get(server_name)
-        if not server:
-            logging.error(f"Server not found: {server_name}")
-            return "Server not found."
-        async with GameRCON(server["RCON_HOST"], server["RCON_PORT"], server["RCON_PASS"]) as pc:
-            try:
-                return await asyncio.wait_for(pc.send(command), timeout=10.0)
-            except asyncio.TimeoutError:
-                logging.error(f"Command timed out: {server_name} {command}")
-                return "Command timed out."
-            except Exception as e:
-                logging.error(f"Error sending command: {e}")
-                return f"Error sending command: {e}"
-
     async def server_autocomplete(self, interaction: discord.Interaction, current: str):
         server_names = [name for name in self.server_config["RCON_SERVERS"] if current.lower() in name.lower()]
         choices = [app_commands.Choice(name=name, value=name) for name in server_names]
@@ -96,7 +81,7 @@ class WeatherControlCog(commands.Cog):
         self.current_server = server
         self.save_season(self.current_season, self.current_server)
 
-        await self.rcon_command(server, f"announce Season set to {self.current_season} on {server}")
+        await rcon_command(self.server_config, server, f"announce Season set to {self.current_season} on {server}")
 
         if self.weather_task and self.weather_task.is_running():
             self.weather_task.cancel()
@@ -109,19 +94,28 @@ class WeatherControlCog(commands.Cog):
     @tasks.loop(minutes=5)
     async def weather_update(self, server):
         if self.current_season is None or server not in self.server_config["RCON_SERVERS"]:
+            logging.info("No valid season or server config found; aborting task.")
             return
 
         weather_message, selected_weather = get_weather_update(self.current_season)
 
-        embed = discord.Embed(title=f"Weather Update on {server}", description=weather_message, color=discord.Color.blue())
         if self.weather_channel:
+            embed = discord.Embed(title=f"Weather Update on {server}", description=weather_message, color=discord.Color.blue())
             await self.weather_channel.send(embed=embed)
 
-        if self.forecast_channel:
-            await self.forecast_channel.edit(name=f"Forecast: {selected_weather.capitalize()}")
+        new_name = f"Forecast: {selected_weather.capitalize()}"
 
-        rcon_command = f"weather {selected_weather}"
-        await self.rcon_command(server, rcon_command)
+        if self.forecast_channel:
+            current_name = self.forecast_channel.name
+            if current_name != new_name:
+                try:
+                    await self.forecast_channel.edit(name=new_name)
+                    logging.info("Forecast channel name updated successfully.")
+                except discord.HTTPException as e:
+                    logging.error(f"Failed to edit channel name due to rate limiting or other HTTP issue: {e}")
+
+        command = f"weather {selected_weather}"
+        response = await rcon_command(self.server_config, server, command)
 
 async def setup(bot):
     await bot.add_cog(WeatherControlCog(bot))
