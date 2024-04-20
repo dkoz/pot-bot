@@ -29,7 +29,55 @@ class RconCog(commands.Cog):
 
         response = await rcon_command(self.server_config, server, command)
         
-        embed = discord.Embed(title=server, color=discord.Color.green())
+        embed = discord.Embed(title=server, color=discord.Color.blurple())
+        embed.description = f"**Response:** {response}"
+        await interaction.followup.send(embed=embed)
+
+    @group.command(name="listplayers", description="List players on a server.")
+    @app_commands.autocomplete(server=server_autocomplete)
+    @app_commands.describe(server="The server to list players from.")
+    async def listplayers(self, interaction: discord.Interaction, server: str):
+        await interaction.response.defer(ephemeral=True)
+
+        response = await rcon_command(self.server_config, server, "listplayers")
+        
+        embed = discord.Embed(title=server, color=discord.Color.blurple())
+        embed.description = f"**Response:** {response}"
+        await interaction.followup.send(embed=embed)
+        
+    @group.command(name="announce", description="Send an announcement to a server.")
+    @app_commands.autocomplete(server=server_autocomplete)
+    @app_commands.describe(message="The message to send", server="The server to send the message to.")
+    async def announce(self, interaction: discord.Interaction, message: str, server: str):
+        await interaction.response.defer(ephemeral=True)
+
+        response = await rcon_command(self.server_config, server, f"announce {message}")
+        
+        embed = discord.Embed(title=server, color=discord.Color.blurple())
+        embed.description = f"**Response:** {response}"
+        await interaction.followup.send(embed=embed)
+        
+    @group.command(name="kick", description="Kick a player from a server.")
+    @app_commands.autocomplete(server=server_autocomplete)
+    @app_commands.describe(player="The player to kick", reason="The reason for kicking the player.", server="The server to kick the player from.")
+    async def kick(self, interaction: discord.Interaction, player: str, reason: str, server: str):
+        await interaction.response.defer(ephemeral=True)
+
+        response = await rcon_command(self.server_config, server, f"kick {player} {reason}")
+        
+        embed = discord.Embed(title=server, color=discord.Color.blurple())
+        embed.description = f"**Response:** {response}"
+        await interaction.followup.send(embed=embed)
+        
+    @group.command(name="ban", description="Ban a player from a server.")
+    @app_commands.autocomplete(server=server_autocomplete)
+    @app_commands.describe(player="The player to ban", duration="The duration of the ban", reason="The reason for banning the player.", userreason="The reason shown to the user.", server="The server to ban the player from.")
+    async def ban(self, interaction: discord.Interaction, player: str, duration: str, reason: str, userreason: str, server: str):
+        await interaction.response.defer(ephemeral=True)
+
+        response = await rcon_command(self.server_config, server, f'ban {player} {duration} "{reason}" "{userreason}"')
+        
+        embed = discord.Embed(title=server, color=discord.Color.blurple())
         embed.description = f"**Response:** {response}"
         await interaction.followup.send(embed=embed)
 

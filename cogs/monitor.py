@@ -9,7 +9,7 @@ import logging
 class MonitorCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.json_file = os.path.join("data", "server_status.json")
+        self.json_file = os.path.join("data", "monitor.json")
         self.server_config = self.load_config()
         self.message_data = self.load_json()
         self.update_task.start()
@@ -115,7 +115,7 @@ class MonitorCog(commands.Cog):
                 if channel is not None:
                     await self.post_or_update_embed(channel, server_name, server_info)
 
-    @app_commands.command(name="post_embeds", description="Posts server status and player list embeds to a selected channel.",)
+    @app_commands.command(name="monitor", description="Posts server status and player list embeds to a selected channel.",)
     @app_commands.autocomplete(server=server_autocomplete)
     @app_commands.describe(channel="Channel to post the embeds", server="Select a game server to post.")
     async def post_embeds(self, interaction: discord.Interaction, channel: discord.TextChannel, server: str):
