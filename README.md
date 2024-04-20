@@ -21,6 +21,7 @@ This is an example RCON configuration for your servers.
             "RCON_HOST": "127.0.0.1",
             "RCON_PORT": 7779,
             "RCON_PASS": "examplePass",
+            "SERVER_PORT": 7777,
             "QUERY_PORT": 7778
         }
     },

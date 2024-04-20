@@ -31,15 +31,30 @@ class QueryCog(commands.Cog):
                 address = (server_info["RCON_HOST"], server_info["QUERY_PORT"])
                 info = a2s.info(address)
                 embed = discord.Embed(title=f"{server} Status", color=discord.Color.blue())
-                embed.add_field(name="Server Name", value=info.server_name, inline=False)
+                embed.add_field(name=info.server_name, value=info.game, inline=False)
                 embed.add_field(name="Map", value=info.map_name, inline=True)
                 embed.add_field(name="Players", value=f"{info.player_count}/{info.max_players}", inline=True)
-                embed.add_field(name="Game", value=info.game, inline=True)
-                embed.add_field(name="Address", value=f"{server_info['RCON_HOST']}:{server_info['QUERY_PORT']}", inline=False)
+                embed.add_field(name="Version", value=info.version, inline=True)
+                embed.add_field(name="Connect", value=f"```{server_info['RCON_HOST']}:{server_info['SERVER_PORT']}```", inline=False)
                 await interaction.response.send_message(embed=embed)
+                
+                players = a2s.players(address)
+                embed_players = discord.Embed(title=f"{server} Players", color=discord.Color.blue())
+                
+                player_display = ""
+                for index, player in enumerate(players):
+                    if index % 30 == 0 and index != 0:
+                        embed_players.add_field(name="Players", value=player_display, inline=True)
+                        player_display = ""
+                    player_display += f"{player.name} ({player.score})\n"
+                
+                if player_display:
+                    embed_players.add_field(name="Players", value=player_display, inline=True)
+                
+                await interaction.followup.send(embed=embed_players)
             except Exception as e:
                 logging.error(f"Error querying server: {e}")
-                await interaction.response.send_message(f"Error querying server: {e}", ephemeral=True)
+                await interaction.followup.send(f"Error querying server: {e}", ephemeral=True)
         else:
             await interaction.response.send_message("Server not found.", ephemeral=True)
 

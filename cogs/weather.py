@@ -12,7 +12,7 @@ class WeatherControlCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.server_config = self.load_config()
-        self.data_path = os.path.join('data', 'season.json')  # Path to the season data file
+        self.data_path = os.path.join('data', 'season.json')
         self.current_season, self.current_server = self.load_season()
         self.weather_channel = None
         self.forecast_channel = None
@@ -55,13 +55,16 @@ class WeatherControlCog(commands.Cog):
     async def rcon_command(self, server_name, command):
         server = self.server_config["RCON_SERVERS"].get(server_name)
         if not server:
+            logging.error(f"Server not found: {server_name}")
             return "Server not found."
         async with GameRCON(server["RCON_HOST"], server["RCON_PORT"], server["RCON_PASS"]) as pc:
             try:
                 return await asyncio.wait_for(pc.send(command), timeout=10.0)
             except asyncio.TimeoutError:
+                logging.error(f"Command timed out: {server_name} {command}")
                 return "Command timed out."
             except Exception as e:
+                logging.error(f"Error sending command: {e}")
                 return f"Error sending command: {e}"
 
     async def server_autocomplete(self, interaction: discord.Interaction, current: str):
@@ -127,15 +130,18 @@ class WeatherControlCog(commands.Cog):
         }
         message = message_details.get(weather, "Weather update.")
         embed = discord.Embed(title=f"Weather Update on {server}", description=message, color=discord.Color.blue())
-        if self.weather_channel:
-            await self.weather_channel.send(embed=embed)
-        else:
-            logging.error("Weather channel is not accessible.")
-
-        await asyncio.sleep(10)  # Delay to avoid rate limiting
-        
-        if self.forecast_channel:
-            await self.forecast_channel.edit(name=f"Forecast: {weather.capitalize()}")
+        try:
+            if self.weather_channel:
+                await self.weather_channel.send(embed=embed)
+            if self.forecast_channel:
+                await self.forecast_channel.edit(name=f"Forecast: {weather.capitalize()}")
+        except discord.HTTPException as e:
+            if e.status == 429:
+                retry_after = e.retry_after
+                await asyncio.sleep(retry_after)
+                await self.weather_update(server)
+            else:
+                raise
 
 async def setup(bot):
     await bot.add_cog(WeatherControlCog(bot))
