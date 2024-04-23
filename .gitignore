@@ -3,3 +3,5 @@
 .env
 *.json
 *.log
+*.db
+/cogs-dev/*

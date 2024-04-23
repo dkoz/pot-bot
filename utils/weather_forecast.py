@@ -24,6 +24,6 @@ def get_weather_update(season):
     selected_weather = random.choices(weather_types, weights=weights, k=1)[0]
 
     humidity = random.randint(70, 100)
-    wind_speed = random.randint(10, 40)
+    wind_speed = random.randint(1, 40)
 
     return message_details[selected_weather].format(humidity=humidity, wind_speed=wind_speed), selected_weather
