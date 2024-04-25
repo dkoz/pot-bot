@@ -81,5 +81,53 @@ class RconCog(commands.Cog):
         embed.description = f"**Response:** {response}"
         await interaction.followup.send(embed=embed)
 
+    @group.command(name="setmarks", description="Set a mark for a player.")
+    @app_commands.autocomplete(server=server_autocomplete)
+    @app_commands.describe(player="The player to set the marks for.", marks="Number of marks to give a player.", server="The server to set the mark on.")
+    async def setmarks(self, interaction: discord.Interaction, player: str, marks: str, server: str):
+        await interaction.response.defer(ephemeral=True)
+
+        response = await rcon_command(self.server_config, server, f"setmarks {player} {marks}")
+        
+        embed = discord.Embed(title=server, color=discord.Color.blurple())
+        embed.description = f"**Response:** {response}"
+        await interaction.followup.send(embed=embed)
+        
+    @group.command(name="setmarksall", description="Set marks for all players on the server.")
+    @app_commands.autocomplete(server=server_autocomplete)
+    @app_commands.describe(marks="Number of marks to give to everyone.", server="The server to set the mark on.")
+    async def setmarksall(self, interaction: discord.Interaction, marks: str, server: str):
+        await interaction.response.defer(ephemeral=True)
+
+        response = await rcon_command(self.server_config, server, f"setmarksall {marks}")
+        
+        embed = discord.Embed(title=server, color=discord.Color.blurple())
+        embed.description = f"**Response:** {response}"
+        await interaction.followup.send(embed=embed)
+        
+    @group.command(name="addmarks", description="Add marks to a player.")
+    @app_commands.autocomplete(server=server_autocomplete)
+    @app_commands.describe(player="The player to add the marks to.", marks="Number of marks to give a player.", server="The server to set the mark on.")
+    async def addmarks(self, interaction: discord.Interaction, player: str, marks: str, server: str):
+        await interaction.response.defer(ephemeral=True)
+
+        response = await rcon_command(self.server_config, server, f"addmarks {player} {marks}")
+        
+        embed = discord.Embed(title=server, color=discord.Color.blurple())
+        embed.description = f"**Response:** {response}"
+        await interaction.followup.send(embed=embed)
+        
+    @group.command(name="removemarks", description="Remove marks from a player.")
+    @app_commands.autocomplete(server=server_autocomplete)
+    @app_commands.describe(player="The player to remove marks from.", marks="Number of marks to remove from a player.", server="Select a server to remove the marks from.")
+    async def removemarks(self, interaction: discord.Interaction, player: str, marks: str, server: str):
+        await interaction.response.defer(ephemeral=True)
+
+        response = await rcon_command(self.server_config, server, f"removemarks {player} {marks}")
+        
+        embed = discord.Embed(title=server, color=discord.Color.blurple())
+        embed.description = f"**Response:** {response}"
+        await interaction.followup.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(RconCog(bot))

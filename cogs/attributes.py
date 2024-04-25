@@ -65,5 +65,19 @@ class AttributesCog(commands.Cog):
         embed.description = f"**Response:** {response}"
         await interaction.followup.send(embed=embed)
 
+    @group.command(name="setall", description="Set an attribute for all users.")
+    @app_commands.autocomplete(server=server_autocomplete, attribute=attribute_autocomplete)
+    @app_commands.describe(attribute="The attribute to set.", value="The value to set the attribute to.")
+    async def setall(self, interaction: discord.Interaction, attribute: str, value: str, server: str):
+        await interaction.response.defer(ephemeral=True)
+
+        response = await rcon_command(self.server_config, server, f"setattrall {attribute} {value}")
+        
+        embed = discord.Embed(title=server, color=discord.Color.blurple())
+        embed.description = f"**Response:** {response}"
+        await interaction.followup.send(embed=embed)
+
+
+
 async def setup(bot):
     await bot.add_cog(AttributesCog(bot))
