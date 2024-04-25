@@ -66,8 +66,22 @@ class WeatherControlCog(commands.Cog):
         filtered_seasons = [season for season in seasons if current.lower() in season.lower()]
         choices = [app_commands.Choice(name=season, value=season) for season in filtered_seasons]
         return choices
+    
+    async def weather_autocomplete(self, interaction: discord.Interaction, current: str):
+        weathers = ["ClearSky", "Rain", "Fog", "Overcast", "Storm", "Snow"]
+        filtered_weathers = [weather for weather in weathers if current.lower() in weather.lower()]
+        choices = [app_commands.Choice(name=weather, value=weather) for weather in filtered_weathers]
+        return choices
 
     group = app_commands.Group(name="weather", description="Set the weather pattern for a server", default_permissions=discord.Permissions(administrator=True))
+
+    @group.command(name="setweather", description="Force switch the weather through RCON.")
+    @app_commands.autocomplete(server=server_autocomplete, weather=weather_autocomplete)
+    @app_commands.describe(weather="The weather pattern to set", server="The server to apply the weather pattern to.")
+    async def set_weather(self, interaction: discord.Interaction, weather: str, server: str):
+        await interaction.response.defer(ephemeral=True)
+        await rcon_command(self.server_config, server, f"weather {weather}")
+        await interaction.followup.send(f"Weather set to {weather} on {server}.")
 
     @group.command(name="setseason", description="Set the weather pattern for a server.")
     @app_commands.autocomplete(server=server_autocomplete, season=season_autocomplete)
