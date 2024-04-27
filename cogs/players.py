@@ -9,6 +9,7 @@ class PlayerCog(commands.Cog):
         self.db = Database("players.db")
 
     @app_commands.command(name="link", description="Link your Discord ID to your Alderon ID")
+    @app_commands.describe(alderon_id="Your Alderon ID")
     async def link(self, interaction: discord.Interaction, alderon_id: str):
         discord_id = interaction.user.id
         discord_name = interaction.user.name
@@ -16,6 +17,16 @@ class PlayerCog(commands.Cog):
         try:
             self.db.link_discord_to_alderon(discord_id, discord_name, alderon_id)
             await interaction.response.send_message("Your Discord ID is now linked with your Alderon ID.")
+        except Exception as e:
+            await interaction.response.send_message(f"Error: {str(e)}")
+
+    @app_commands.command(name="unlink", description="Unlink your Discord ID from your Alderon ID")
+    async def unlink(self, interaction: discord.Interaction):
+        discord_id = interaction.user.id
+
+        try:
+            self.db.unlink_discord(discord_id)
+            await interaction.response.send_message("Your Discord ID is now unlinked.")
         except Exception as e:
             await interaction.response.send_message(f"Error: {str(e)}")
 
@@ -28,18 +39,18 @@ class PlayerCog(commands.Cog):
             player_profile = self.db.get_player(alderon_id)
             if player_profile and len(player_profile) >= 6:
                 _, name, alderon_id, kills, deaths, dinosaur, location = player_profile
-
-                k_d_ratio = kills / deaths if deaths > 0 else float("inf")
-
-                response = (
-                    f"Name: {name}\n"
-                    f"Alderon ID: {alderon_id}\n"
-                    f"Dinosaur: {dinosaur}\n"
-                    f"Location: {location}\n"
-                    f"Kills: {kills}\n"
-                    f"Deaths: {deaths}\n"
+                avatar_url = interaction.user.avatar.url
+                
+                embed = discord.Embed(
+                    title=f"{name} ({alderon_id})",
+                    color=discord.Color.blurple()
                 )
-                await interaction.response.send_message(response)
+                embed.add_field(name="Kills", value=kills, inline=True)
+                embed.add_field(name="Deaths", value=deaths, inline=True)
+                embed.add_field(name="Dinosaur", value=dinosaur, inline=True)
+                embed.add_field(name="Location", value=location, inline=True)
+                embed.set_thumbnail(url=avatar_url)
+                await interaction.response.send_message(embed=embed)
             else:
                 await interaction.response.send_message("Player profile not found or incomplete.")
         else:
@@ -67,16 +78,24 @@ class PlayerCog(commands.Cog):
             await interaction.response.send_message("No players found in the leaderboard.")
 
     @app_commands.command(name="search", description="Search for a player's profile")
+    @app_commands.describe(player_name="The name of the player to search for.")
+    @app_commands.default_permissions(administrator=True)
     async def search(self, interaction: discord.Interaction, player_name: str):
-        cursor = self.db.connection.cursor()
-        cursor.execute("SELECT name FROM players WHERE name LIKE ?", (f"%{player_name}%",))
-        results = cursor.fetchall()
+        player_profile = self.db.get_player_by_name(player_name)
 
-        if results:
-            suggestions = ", ".join(row[0] for row in results)
-            await interaction.response.send_message(f"Matches: {suggestions}")
+        if player_profile:
+            _, name, alderon_id, kills, deaths, dinosaur, location = player_profile
+            embed = discord.Embed(
+                title=f"{name} ({alderon_id})",
+                color=discord.Color.blurple()
+            )
+            embed.add_field(name="Kills", value=kills, inline=True)
+            embed.add_field(name="Deaths", value=deaths, inline=True)
+            embed.add_field(name="Dinosaur", value=dinosaur, inline=True)
+            embed.add_field(name="Location", value=location, inline=True)
+            await interaction.response.send_message(embed=embed)
         else:
-            await interaction.response.send_message("No matching players found.")
+            await interaction.response.send_message("Player profile not found or incomplete.")
 
     @search.autocomplete("player_name")
     async def search_autocomplete(self, interaction: discord.Interaction, current: str):

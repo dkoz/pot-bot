@@ -13,7 +13,7 @@ class Database:
                 """
                 CREATE TABLE IF NOT EXISTS players (
                     id INTEGER PRIMARY KEY,
-                    in_game_name TEXT,
+                    name TEXT,
                     alderon_id TEXT UNIQUE,
                     kills INTEGER DEFAULT 0,
                     deaths INTEGER DEFAULT 0,
@@ -41,11 +41,22 @@ class Database:
             )
 
     def link_discord_to_alderon(self, discord_id: int, discord_name: str, alderon_id: str):
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM link WHERE discord_id = ?", (discord_id,))
+        result = cursor.fetchone()
+        
+        if result:
+            raise Exception("Your Discord ID is already linked to an Alderon ID.")
+        
         with self.connection:
             self.connection.execute(
                 "INSERT INTO link (discord_id, discord_name, alderon_id) VALUES (?, ?, ?)",
                 (discord_id, discord_name, alderon_id),
             )
+
+    def unlink_discord(self, discord_id: int):
+        with self.connection:
+            self.connection.execute("DELETE FROM link WHERE discord_id = ?", (discord_id,))
 
     def update_player(
         self,
@@ -96,6 +107,11 @@ class Database:
             "SELECT name, alderon_id, kills, deaths, dinosaur, location FROM players WHERE alderon_id = ?", 
             (alderon_id,)
         )
+        return cursor.fetchone()
+    
+    def get_player_by_name(self, player_name: str):
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM players WHERE name LIKE ?", (f"%{player_name}%",))
         return cursor.fetchone()
 
     def get_player_by_discord_id(self, discord_id: int) -> Optional[str]:
