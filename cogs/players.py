@@ -45,6 +45,27 @@ class PlayerCog(commands.Cog):
         else:
             await interaction.response.send_message("Your Discord ID isn't linked to any Alderon ID.")
 
+    @app_commands.command(name="leaderboard", description="Get the top players leaderboard")
+    async def leaderboard(self, interaction: discord.Interaction):
+        limit = 10
+        top_players = self.db.get_top_kills(limit)
+
+        if top_players:
+            embed = discord.Embed(
+                title="Top Players Leaderboard",
+                color=discord.Color.blurple(),
+            )
+            for index, player in enumerate(top_players, start=1):
+                _, name, alderon_id, kills, deaths, dinosaur, location = player
+                embed.add_field(
+                    name=f"{index}. {name} ({alderon_id})",
+                    value=f"Kills: {kills} / Deaths: {deaths}",
+                    inline=False,
+                )
+            await interaction.response.send_message(embed=embed)
+        else:
+            await interaction.response.send_message("No players found in the leaderboard.")
+
     @app_commands.command(name="search", description="Search for a player's profile")
     async def search(self, interaction: discord.Interaction, player_name: str):
         cursor = self.db.connection.cursor()

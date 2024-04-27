@@ -110,5 +110,13 @@ class Database:
         cursor.execute("SELECT * FROM players")
         return cursor.fetchall()
 
+    def get_top_kills(self, limit: int) -> List[Tuple[int, str, str, int, int, str, str]]:
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "SELECT * FROM players ORDER BY kills DESC LIMIT ?",
+            (limit,),
+        )
+        return cursor.fetchall()
+
     def close(self):
         self.connection.close()
