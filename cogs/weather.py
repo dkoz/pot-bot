@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands, tasks
 from discord import app_commands
 from utils.rcon_protocol import rcon_command
-from utils.weather_forecast import get_weather_update
+from utils.weather_forecast import get_weather_update, weather_emojis
 import asyncio
 import os
 import logging
@@ -114,7 +114,10 @@ class WeatherControlCog(commands.Cog):
         weather_message, selected_weather = get_weather_update(self.current_season)
 
         if self.weather_channel:
-            embed = discord.Embed(title=f"Weather Update on {server}", description=weather_message, color=discord.Color.blue())
+            embed = discord.Embed(title=f"Weather on Panjura", description=weather_message, color=discord.Color.blue())
+            emoji_url = weather_emojis.get(selected_weather, "")
+            if emoji_url:
+                embed.set_thumbnail(url=emoji_url)
             await self.weather_channel.send(embed=embed)
 
         new_name = f"Forecast: {selected_weather.capitalize()}"
@@ -129,7 +132,7 @@ class WeatherControlCog(commands.Cog):
                     logging.error(f"Failed to edit channel name due to rate limiting or other HTTP issue: {e}")
 
         command = f"weather {selected_weather}"
-        response = await rcon_command(self.server_config, server, command)
+        await rcon_command(self.server_config, server, command)
 
 async def setup(bot):
     await bot.add_cog(WeatherControlCog(bot))

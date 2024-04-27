@@ -77,7 +77,5 @@ class AttributesCog(commands.Cog):
         embed.description = f"**Response:** {response}"
         await interaction.followup.send(embed=embed)
 
-
-
 async def setup(bot):
     await bot.add_cog(AttributesCog(bot))

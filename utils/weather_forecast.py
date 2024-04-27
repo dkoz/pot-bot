@@ -17,6 +17,16 @@ message_details = {
     "snow": "Heavy snowfall with accumulation expected."
 }
 
+weather_emojis = {
+    "rain": "https://cdn2.iconfinder.com/data/icons/weather-color-2/500/weather-32-512.png",
+    "storm": "https://cdn2.iconfinder.com/data/icons/weather-color-2/500/weather-23-512.png",
+    "overcast": "https://cdn2.iconfinder.com/data/icons/weather-color-2/500/weather-02-512.png",
+    "fog": "https://cdn2.iconfinder.com/data/icons/weather-color-2/500/weather-27-512.png",
+    "cloudy": "https://cdn2.iconfinder.com/data/icons/weather-color-2/500/weather-22-512.png",
+    "clearSky": "https://cdn2.iconfinder.com/data/icons/weather-color-2/500/weather-01-512.png",
+    "snow": "https://cdn2.iconfinder.com/data/icons/weather-color-2/500/weather-24-512.png"
+}
+
 def get_weather_update(season):
     weather_options = weather_probabilities[season]
     weights = [weight for _, weight in weather_options]
