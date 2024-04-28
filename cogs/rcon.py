@@ -129,5 +129,29 @@ class RconCog(commands.Cog):
         embed.description = f"**Response:** {response}"
         await interaction.followup.send(embed=embed)
 
+    @group.command(name="restart", description="Restart the server.")
+    @app_commands.autocomplete(server=server_autocomplete)
+    @app_commands.describe(seconds="Restarts the server after the specified number of seconds.", server="The server to restart.")
+    async def restart(self, interaction: discord.Interaction, seconds: str, server: str):
+        await interaction.response.defer(ephemeral=True)
+
+        response = await rcon_command(self.server_config, server, f"restart {seconds}")
+        
+        embed = discord.Embed(title=server, color=discord.Color.blurple())
+        embed.description = f"**Response:** {response}"
+        await interaction.followup.send(embed=embed)
+
+    @group.command(name="whisper", description="Send a private message to a player.")
+    @app_commands.autocomplete(server=server_autocomplete)
+    @app_commands.describe(player="The player to send the message to.", message="The message to send.", server="The server to send the message from.")
+    async def whisper(self, interaction: discord.Interaction, player: str, message: str, server: str):
+        await interaction.response.defer(ephemeral=True)
+
+        response = await rcon_command(self.server_config, server, f"whisper {player} {message}")
+        
+        embed = discord.Embed(title=server, color=discord.Color.blurple())
+        embed.description = f"**Response:** {response}"
+        await interaction.followup.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(RconCog(bot))
