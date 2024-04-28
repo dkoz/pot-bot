@@ -33,13 +33,13 @@ class RconCog(commands.Cog):
         embed.description = f"**Response:** {response}"
         await interaction.followup.send(embed=embed)
 
-    @group.command(name="listplayers", description="List players on a server.")
+    @group.command(name="playerinfo", description="Get information about a player.")
     @app_commands.autocomplete(server=server_autocomplete)
-    @app_commands.describe(server="The server to list players from.")
-    async def listplayers(self, interaction: discord.Interaction, server: str):
+    @app_commands.describe(player="The player to get information about.", server="The server to get the information from.")
+    async def playerinfo(self, interaction: discord.Interaction, player: str, server: str):
         await interaction.response.defer(ephemeral=True)
 
-        response = await rcon_command(self.server_config, server, "listplayers")
+        response = await rcon_command(self.server_config, server, f"playerinfo {player}")
         
         embed = discord.Embed(title=server, color=discord.Color.blurple())
         embed.description = f"**Response:** {response}"
@@ -148,6 +148,30 @@ class RconCog(commands.Cog):
         await interaction.response.defer(ephemeral=True)
 
         response = await rcon_command(self.server_config, server, f"whisper {player} {message}")
+        
+        embed = discord.Embed(title=server, color=discord.Color.blurple())
+        embed.description = f"**Response:** {response}"
+        await interaction.followup.send(embed=embed)
+
+    @group.command(name="teleport", description="Teleport a player to another player.")
+    @app_commands.autocomplete(server=server_autocomplete)
+    @app_commands.describe(player="The player to teleport.", target="The player to teleport to.", server="The server to teleport the player on.")
+    async def teleport(self, interaction: discord.Interaction, player: str, target: str, server: str):
+        await interaction.response.defer(ephemeral=True)
+
+        response = await rcon_command(self.server_config, server, f"teleport {player} {target}")
+        
+        embed = discord.Embed(title=server, color=discord.Color.blurple())
+        embed.description = f"**Response:** {response}"
+        await interaction.followup.send(embed=embed)
+        
+    @group.command(name="teleportall", description="Teleport all players to a player.")
+    @app_commands.autocomplete(server=server_autocomplete)
+    @app_commands.describe(target="The coordinates to teleport a player to.", server="The server to teleport the players on.")
+    async def teleportall(self, interaction: discord.Interaction, target: str, server: str):
+        await interaction.response.defer(ephemeral=True)
+
+        response = await rcon_command(self.server_config, server, f"teleportall {target}")
         
         embed = discord.Embed(title=server, color=discord.Color.blurple())
         embed.description = f"**Response:** {response}"
