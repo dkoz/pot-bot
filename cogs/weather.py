@@ -34,10 +34,11 @@ class WeatherControlCog(commands.Cog):
 
     async def update_channels(self, season):
         weather_message, selected_weather = get_weather_update(season)
+
         if self.pattern_channel:
-            await self.pattern_channel.edit(name=f"Season: {season.capitalize()}")
-        if self.forecast_channel:
-            await self.forecast_channel.edit(name=f"Forecast: {selected_weather.capitalize()}")
+            new_pattern_name = f"Season: {season.capitalize()}"
+            if self.pattern_channel.name != new_pattern_name:
+                await self.pattern_channel.edit(name=new_pattern_name)
 
     def load_config(self):
         with open('config.json', 'r') as f:
@@ -120,16 +121,15 @@ class WeatherControlCog(commands.Cog):
                 embed.set_thumbnail(url=emoji_url)
             await self.weather_channel.send(embed=embed)
 
-        new_name = f"Forecast: {selected_weather.capitalize()}"
+        await asyncio.sleep(13)
 
-        if self.forecast_channel:
-            current_name = self.forecast_channel.name
-            if current_name != new_name:
-                try:
-                    await self.forecast_channel.edit(name=new_name)
-                    logging.info("Forecast channel name updated successfully.")
-                except discord.HTTPException as e:
-                    logging.error(f"Failed to edit channel name due to rate limiting or other HTTP issue: {e}")
+        new_name = f"Forecast: {selected_weather.capitalize()}"
+        if self.forecast_channel and self.forecast_channel.name != new_name:
+            try:
+                await self.forecast_channel.edit(name=new_name)
+                logging.info("Forecast channel name updated successfully.")
+            except discord.HTTPException as e:
+                logging.error(f"Failed to edit channel name due to rate limiting or other HTTP issue: {e}")
 
         command = f"weather {selected_weather}"
         await rcon_command(self.server_config, server, command)

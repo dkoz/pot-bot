@@ -23,7 +23,7 @@ weather_emojis = {
     "overcast": "https://cdn2.iconfinder.com/data/icons/weather-color-2/500/weather-02-512.png",
     "fog": "https://cdn2.iconfinder.com/data/icons/weather-color-2/500/weather-27-512.png",
     "cloudy": "https://cdn2.iconfinder.com/data/icons/weather-color-2/500/weather-22-512.png",
-    "clearSky": "https://cdn2.iconfinder.com/data/icons/weather-color-2/500/weather-01-512.png",
+    "clearsky": "https://cdn2.iconfinder.com/data/icons/weather-color-2/500/weather-01-512.png",
     "snow": "https://cdn2.iconfinder.com/data/icons/weather-color-2/500/weather-24-512.png"
 }
 
