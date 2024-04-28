@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, g
+import discord
 import requests
 import logging
 from utils.database import Database
@@ -7,6 +8,18 @@ import settings
 app = Flask(__name__)
 
 DISCORD_WEBHOOK_URL = settings.webhook_url
+
+WEBHOOKS = {
+    'login': settings.webhook_login,
+    'logout': settings.webhook_logout,
+    'respawn': settings.webhook_respawn,
+    'killed': settings.webhook_killed,
+    'admincommand': settings.webhook_admincommand,
+    'adminspectate': settings.webhook_adminspectate,
+    'playerchat': settings.webhook_playerchat,
+    'playerdamage': settings.webhook_playerdamage,
+    'playerreport': settings.webhook_playerreport,
+}
 
 def get_db():
     if 'db' not in g:
@@ -21,10 +34,18 @@ def close_db(exception=None):
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def send_to_discord(content):
-    payload = {"content": content}
+def send_to_discord(embed=None, content=None, webhook_url=None):
+    if not webhook_url:
+        webhook_url = DISCORD_WEBHOOK_URL
+
+    payload = {}
+    if content:
+        payload["content"] = content
+    if embed:
+        payload["embeds"] = [embed.to_dict()]
+
     try:
-        response = requests.post(DISCORD_WEBHOOK_URL, json=payload)
+        response = requests.post(webhook_url, json=payload)
         response.raise_for_status()
     except requests.RequestException as e:
         logging.error(f"Error sending to Discord: {e}")
@@ -47,8 +68,14 @@ def login():
             db.insert_player(player_name, alderon_id)
 
         db.connection.commit()
+        
+        embed = discord.Embed(
+            title=f"Player Connected",
+            description=f"{player_name} ({alderon_id}) has logged in to {server_name}.",
+            color=discord.Color.blurple()
+        )
 
-        send_to_discord(f"Player '{player_name}' logged in to server '{server_name}'")
+        send_to_discord(embed=embed, webhook_url=WEBHOOKS['login'])
 
         return jsonify({"status": "success"}), 200
 
@@ -69,8 +96,14 @@ def logout():
         player_name = request_data['PlayerName']
         alderon_id = request_data['AlderonId']
         battleye_guid = request_data['BattlEyeGUID']
+        
+        embed = discord.Embed(
+            title=f"Player Disconnected",
+            description=f"{player_name} ({alderon_id}) has logged out of {server_name}.",
+            color=discord.Color.blurple()
+        )
 
-        send_to_discord(f"Player '{player_name}' logged out from server '{server_name}'")
+        send_to_discord(embed=embed)
 
         return jsonify({"status": "success"}), 200
 
@@ -97,8 +130,14 @@ def respawn():
         db.update_player(player_alderon_id, location=location, dinosaur=dinosaur_type)
 
         db.connection.commit()
+        
+        embed = discord.Embed(
+            title=f"Player Respawned",
+            description=f"{player_name} ({player_alderon_id}) has respawned at {location}\nDinosaur: {dinosaur_type} ({dinosaur_growth})",
+            color=discord.Color.blurple()
+        )
 
-        send_to_discord(f"{player_name} ({player_alderon_id}) has respawned at {location}!")
+        send_to_discord(embed=embed)
 
         return jsonify({"status": "success"}), 200
 
@@ -146,8 +185,270 @@ def killed():
 
         db.connection.commit()
 
-        send_to_discord(f"Victim '{victim_name}' was killed by '{killer_name}' at '{victim_poi}' during '{time_of_day}'.")
+        embed = discord.Embed(
+            title=f"Player Killed",
+            description=(
+                f"Time of Day: {time_of_day}\n"
+                f"Damage Type: {damage_type}"
+            ),
+            color=discord.Color.blurple()
+        )
 
+        embed.add_field(
+            name="Victim",
+            value=(
+                f"Player: {victim_name} ({victim_alderon_id})\n"
+                f"Admin: {victim_is_admin}\n"
+                f"Dinosaur: {victim_dinosaur_type} ({victim_growth})\n"
+                f"Location: {victim_poi}\n"
+                f"Coordinates: {victim_location}"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="Killer",
+            value=(
+                f"Player: {killer_name} ({killer_alderon_id})\n"
+                f"Admin: {killer_is_admin}\n"
+                f"Dinosaur: {killer_dinosaur_type} ({killer_growth})\n"
+                f"Coordinates: {killer_location}"
+            ),
+            inline=False
+        )
+        
+        send_to_discord(embed=embed)
+
+        return jsonify({"status": "success"}), 200
+
+    except KeyError as e:
+        logging.error(f"Missing key: {str(e)}")
+        return jsonify({"error": f"Missing key: {str(e)}"}), 400
+
+    except Exception as e:
+        logging.error(f"Internal server error: {str(e)}")
+        return jsonify({"error": "Internal Server Error"}), 500
+    
+@app.route('/pot/admincommand', methods=['POST'])
+def admincommand():
+    request_data = request.get_json()
+
+    try:
+        admin_name = request_data['AdminName']
+        admin_id = request_data['AdminAlderonId']
+        admin_role = request_data['Role']
+        admin_command = request_data['Command']
+
+        embed = discord.Embed(
+            title=f"Admin Command",
+            description=f"{admin_name} ({admin_id}) used the command: {admin_command}",
+            color=discord.Color.blurple()
+        )
+
+        send_to_discord(embed=embed)
+
+        return jsonify({"status": "success"}), 200
+
+    except KeyError as e:
+        logging.error(f"Missing key: {str(e)}")
+        return jsonify({"error": f"Missing key: {str(e)}"}), 400
+
+    except Exception as e:
+        logging.error(f"Internal server error: {str(e)}")
+        return jsonify({"error": "Internal Server Error"}), 500
+    
+@app.route('/pot/adminspectate', methods=['POST'])
+def adminspectate():
+    request_data = request.get_json()
+
+    try:
+        admin_name = request_data['AdminName']
+        admin_id = request_data['AdminAlderonId']
+        admin_action = request_data['Action']
+
+        embed = discord.Embed(
+            title=f"Admin Spectate",
+            description=f"{admin_name} ({admin_id}) used action: {admin_action}",
+            color=discord.Color.blurple()
+        )
+
+        send_to_discord(embed=embed)
+
+        return jsonify({"status": "success"}), 200
+
+    except KeyError as e:
+        logging.error(f"Missing key: {str(e)}")
+        return jsonify({"error": f"Missing key: {str(e)}"}), 400
+
+    except Exception as e:
+        logging.error(f"Internal server error: {str(e)}")
+        return jsonify({"error": "Internal Server Error"}), 500
+    
+@app.route('/pot/playerchat', methods=['POST'])
+def playerchat():
+    request_data = request.get_json()
+
+    try:
+        channel_id = request_data['ChannelId']
+        channel_name = request_data['ChannelName']
+        player_name = request_data['PlayerName']
+        message = request_data['Message']
+        alderon_id = request_data['AlderonId']
+        is_admin = request_data['bServerAdmin']
+        whisper = request_data['FromWhisper']
+
+        embed = discord.Embed(
+            title=f"Player Chat",
+            description=(
+                f"Player: {player_name} ({alderon_id})\n"
+                f"Channel: {channel_name} ({channel_id})\n"
+                f"Whisper: {whisper}\n"
+                f"Admin: {is_admin}"
+            ),
+            color=discord.Color.blurple()
+        )
+
+        embed.add_field(
+            name="Message",
+            value=message,
+            inline=False
+        )
+
+        send_to_discord(embed=embed)
+
+        return jsonify({"status": "success"}), 200
+
+    except KeyError as e:
+        logging.error(f"Missing key: {str(e)}")
+        return jsonify({"error": f"Missing key: {str(e)}"}), 400
+
+    except Exception as e:
+        logging.error(f"Internal server error: {str(e)}")
+        return jsonify({"error": "Internal Server Error"}), 500
+    
+@app.route('/pot/playerdamage', methods=['POST'])
+def playerdamage():
+    request_data = request.get_json()
+    
+    try:
+        source_name = request_data['SourceName']
+        source_alderon_id = request_data['SourceAlderonId']
+        source_role = request_data['SourceRole']
+        source_dinosaur_type = request_data['SourceDinosaurType']
+        source_admin = request_data['SourceIsAdmin']
+        source_growth = request_data['SourceGrowth']
+        damage_type = request_data['DamageType']
+        damage_amount = request_data['DamageAmount']
+        target_name = request_data['TargetName']
+        target_alderon_id = request_data['TargetAlderonId']
+        target_dinosaur_type = request_data['TargetDinosaurType']
+        target_role = request_data['TargetRole']
+        target_admin = request_data['TargetIsAdmin']
+        target_growth = request_data['TargetGrowth']
+        
+        embed = discord.Embed(
+            title=f"Player Damage",
+            description=f"{source_name} ({source_alderon_id}) dealt {damage_amount} ({damage_type}) damage to {target_name} ({target_alderon_id}).",
+            color=discord.Color.blurple()
+        )
+        
+        embed.add_field(
+            name="Source",
+            value=(
+                f"Player: {source_name} ({source_alderon_id})\n"
+                f"Admin: {source_admin}\n"
+                f"Role: {source_role}\n"
+                f"Dinosaur: {source_dinosaur_type} ({source_growth})"
+            ),
+            inline=False
+        )
+        
+        embed.add_field(
+            name="Target",
+            value=(
+                f"Player: {target_name} ({target_alderon_id})\n"
+                f"Admin: {target_admin}\n"
+                f"Role: {target_role}\n"
+                f"Dinosaur: {target_dinosaur_type} ({target_growth})"
+            ),
+            inline=False
+        )
+        
+        send_to_discord(embed=embed)
+        
+        return jsonify({"status": "success"}), 200
+
+    except KeyError as e:
+        logging.error(f"Missing key: {str(e)}")
+        return jsonify({"error": f"Missing key: {str(e)}"}), 400
+
+    except Exception as e:
+        logging.error(f"Internal server error: {str(e)}")
+        return jsonify({"error": "Internal Server Error"}), 500
+
+@app.route('/pot/playerreport', methods=['POST'])
+def playerreport():
+    request_data = request.get_json()
+    
+    try:
+        reporter_name = request_data['ReporterPlayerName']
+        reporter_alderon_id = request_data['ReporterAlderonId']
+        server_name = request_data['ServerName']
+        secure = request_data['Secure']
+        reported_name = request_data['ReportedPlayerName']
+        reported_alderon_id = request_data['ReportedAlderonId']
+        reported_platform = request_data['ReportedPlatform']
+        report_type = request_data['ReportType']
+        report_reason = request_data['ReportReason']
+        recent_damage_causer_ids = request_data['RecentDamageCauserIDs']
+        nearby_player_ids = request_data['NearbyPlayerIDs']
+        title = request_data['Title']
+        message = request_data['Message']
+        location = request_data['Location']
+        version = request_data['Version']
+        platform = request_data['Platform']
+        
+        embed = discord.Embed(
+            title=f"Player Report - {server_name}",
+            description=f"{reporter_name} ({reporter_alderon_id}) reported {reported_name} ({reported_alderon_id}).",
+            color=discord.Color.blurple()
+        )
+        
+        embed.add_field(
+            name="Report",
+            value=(
+                f"Title: {title}\n"
+                f"Type: {report_type}\n"
+                f"Reason: {report_reason}\n"
+                f"Secure: {secure}\n"
+                f"Platform: {reported_platform}\n"
+                f"Location: {location}\n"
+                f"Version: {version}\n"
+                f"Platform: {platform}"
+            ),
+            inline=False
+        )
+        
+        embed.add_field(
+            name="Recent Damage Causers",
+            value=", ".join(recent_damage_causer_ids),
+            inline=False
+        )
+        
+        embed.add_field(
+            name="Nearby Players",
+            value=", ".join(nearby_player_ids),
+            inline=False
+        )
+        
+        embed.add_field(
+            name="Message",
+            value=message,
+            inline=False
+        )            
+        
+        send_to_discord(embed=embed)
+        
         return jsonify({"status": "success"}), 200
 
     except KeyError as e:
@@ -164,6 +465,5 @@ def close_db(exception=None):
     if db is not None:
         db.close()
 
-# Run the Flask app
 if __name__ == '__main__':
     app.run(debug=True, port=7600)
