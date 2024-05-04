@@ -19,6 +19,7 @@ WEBHOOKS = {
     'playerchat': settings.webhook_playerchat,
     'playerdamage': settings.webhook_playerdamage,
     'playerreport': settings.webhook_playerreport,
+    # 'restart': settings.webhook_restart,
 }
 
 def get_db():
@@ -103,7 +104,7 @@ def logout():
             color=discord.Color.blurple()
         )
 
-        send_to_discord(embed=embed)
+        send_to_discord(embed=embed, webhook_url=WEBHOOKS['logout'])
 
         return jsonify({"status": "success"}), 200
 
@@ -137,7 +138,7 @@ def respawn():
             color=discord.Color.blurple()
         )
 
-        send_to_discord(embed=embed)
+        send_to_discord(embed=embed, webhook_url=WEBHOOKS['respawn'])
 
         return jsonify({"status": "success"}), 200
 
@@ -217,7 +218,7 @@ def killed():
             inline=False
         )
         
-        send_to_discord(embed=embed)
+        send_to_discord(embed=embed, webhook_url=WEBHOOKS['killed'])
 
         return jsonify({"status": "success"}), 200
 
@@ -245,7 +246,7 @@ def admincommand():
             color=discord.Color.blurple()
         )
 
-        send_to_discord(embed=embed)
+        send_to_discord(embed=embed, webhook_url=WEBHOOKS['admincommand'])
 
         return jsonify({"status": "success"}), 200
 
@@ -272,7 +273,7 @@ def adminspectate():
             color=discord.Color.blurple()
         )
 
-        send_to_discord(embed=embed)
+        send_to_discord(embed=embed, webhook_url=WEBHOOKS['adminspectate'])
 
         return jsonify({"status": "success"}), 200
 
@@ -314,7 +315,7 @@ def playerchat():
             inline=False
         )
 
-        send_to_discord(embed=embed)
+        send_to_discord(embed=embed, webhook_url=WEBHOOKS['playerchat'])
 
         return jsonify({"status": "success"}), 200
 
@@ -374,7 +375,7 @@ def playerdamage():
             inline=False
         )
         
-        send_to_discord(embed=embed)
+        send_to_discord(embed=embed, webhook_url=WEBHOOKS['playerdamage'])
         
         return jsonify({"status": "success"}), 200
 
@@ -447,7 +448,7 @@ def playerreport():
             inline=False
         )            
         
-        send_to_discord(embed=embed)
+        send_to_discord(embed=embed, webhook_url=WEBHOOKS['playerreport'])
         
         return jsonify({"status": "success"}), 200
 
@@ -458,6 +459,60 @@ def playerreport():
     except Exception as e:
         logging.error(f"Internal server error: {str(e)}")
         return jsonify({"error": "Internal Server Error"}), 500
+    
+# def send_to_discord(embed=None, webhook_url=None):
+#     if not webhook_url:
+#         webhook_url = DISCORD_WEBHOOK_URL
+
+#     payload = {}
+#     if embed:
+#         payload["embeds"] = [embed.to_dict()]
+
+#     try:
+#         response = requests.post(webhook_url, json=payload)
+#         response.raise_for_status()
+#     except requests.RequestException as e:
+#         logging.error(f"Error sending to Discord: {e}")
+
+# @app.route('/pot/restart', methods=['POST'])
+# def restart():
+#     request_data = request.get_json()
+
+#     try:
+#         restart_time = int(request_data['RestartTimeRemaining'])
+
+#         if restart_time == 600:
+#             message = "The server will restart in 10 minutes."
+#         elif restart_time == 300:
+#             message = "The server will restart in 5 minutes."
+#         elif restart_time == 120:
+#             message = "The server will restart in 2 minutes."
+#         elif restart_time == 60:
+#             message = "The server will restart in 1 minute."
+#         elif restart_time == 30:
+#             message = "The server will restart in 30 seconds."
+#         elif restart_time == 10:
+#             message = "The server will restart in 10 seconds."
+#         elif restart_time == 1:
+#             message = "Server has restarted!"
+
+#         embed = discord.Embed(
+#             title="Server Restart",
+#             description=message,
+#             color=discord.Color.blurple(),
+#         )
+
+#         send_to_discord(embed=embed, webhook_url=WEBHOOKS['restart'])
+
+#         return jsonify({"status": "success"}), 200
+
+#     except KeyError as e:
+#         logging.error(f"Missing key: {str(e)}")
+#         return jsonify({"error": f"Missing key: {str(e)}"}), 400
+
+#     except Exception as e:
+#         logging.error(f"Internal server error: {str(e)}")
+#         return jsonify({"error": "Internal Server Error"}), 500
 
 @app.teardown_appcontext
 def close_db(exception=None):
@@ -466,4 +521,4 @@ def close_db(exception=None):
         db.close()
 
 if __name__ == '__main__':
-    app.run(debug=True, port=7600)
+    app.run(debug=True, host=settings.app_host, port=settings.app_port)
