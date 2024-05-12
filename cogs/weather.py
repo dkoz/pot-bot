@@ -23,7 +23,7 @@ class WeatherControlCog(commands.Cog):
     async def init_channels(self):
         await self.bot.wait_until_ready()
         self.weather_channel = self.bot.get_channel(self.server_config["WEATHER_CHANNEL"])
-        self.forecast_channel = self.bot.get_channel(self.server_config["WEATHER_REPORT"])
+        self.forecast_channel = self.bot.get_channel(self.server_config["WEATHER_FORECAST"])
         self.pattern_channel = self.bot.get_channel(self.server_config["WEATHER_PATTERN"])
         if self.current_season and self.current_server:
             if self.weather_task is None:

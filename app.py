@@ -51,6 +51,24 @@ def send_to_discord(embed=None, content=None, webhook_url=None):
     except requests.RequestException as e:
         logging.error(f"Error sending to Discord: {e}")
 
+@app.route('/')
+def index():
+    return "Webhook Server is running."
+
+@app.route('/health')
+def health():
+    health_data = {}
+
+    for event, url in WEBHOOKS.items():
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            health_data[event] = {"status": "OK"}
+        except requests.RequestException as e:
+            health_data[event] = {"status": "Error", "message": str(e)}
+
+    return jsonify(health_data)
+
 @app.route('/pot/login', methods=['POST'])
 def login():
     request_data = request.get_json()

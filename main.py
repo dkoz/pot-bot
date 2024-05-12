@@ -6,7 +6,7 @@ import logging
 
 logging.basicConfig(level=logging.INFO, filename='bot.log', format='%(asctime)s:%(levelname)s:%(name)s: %(message)s')
 
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix=settings.bot_prefix, intents=intents)
