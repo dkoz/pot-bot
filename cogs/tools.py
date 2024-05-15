@@ -89,7 +89,7 @@ class ToolsCog(commands.Cog):
     async def questlist(self, interaction: discord.Interaction, server: str):
         await interaction.response.defer(ephemeral=True)
 
-        response = await rcon_command(self.server_config, server, "list")
+        response = await rcon_command(self.server_config, server, "listquests")
         
         embed = discord.Embed(title=server, color=discord.Color.blurple())
         embed.description = f"**Response:** {response}"

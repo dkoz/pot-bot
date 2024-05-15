@@ -19,6 +19,10 @@ WEBHOOKS = {
     'playerchat': settings.webhook_playerchat,
     'playerdamage': settings.webhook_playerdamage,
     'playerreport': settings.webhook_playerreport,
+    'playerleave': settings.webhook_playerleave,
+    'waystone': settings.webhook_waystone,
+    'questcomplete': settings.webhook_questcomplete,
+    'questfailed': settings.webhook_questfailed,
     # 'restart': settings.webhook_restart,
 }
 
@@ -477,6 +481,147 @@ def playerreport():
     except Exception as e:
         logging.error(f"Internal server error: {str(e)}")
         return jsonify({"error": "Internal Server Error"}), 500
+    
+@app.route('/pot/waystone', methods=['POST'])
+def waystone():
+    request_data = request.get_json()
+    
+    try:
+        inviter_name = request_data['InviterName']
+        inviter_alderonid = request_data['InviterAlderonId']
+        player_name = request_data['TeleportedPlayerName']
+        player_alderonid = request_data['TeleportedPlayerAlderonId']
+        
+        embed = discord.Embed(
+            title=f"Waystone Teleport",
+            description=f"{inviter_name} ({inviter_alderonid}) teleported {player_name} ({player_alderonid}) to a waystone.",
+            color=discord.Color.blurple()
+        )
+        
+        send_to_discord(embed=embed, webhook_url=WEBHOOKS['waystone'])
+        
+        return jsonify({"status": "success"}), 200
+    
+    except KeyError as e:
+        logging.error(f"Missing key: {str(e)}")
+        return jsonify({"error": f"Missing key: {str(e)}"}), 400
+
+    except Exception as e:
+        logging.error(f"Internal server error: {str(e)}")
+        return jsonify({"error": "Internal Server Error"}), 500
+    
+@app.route('/pot/questcomplete', methods=['POST'])
+def questcomplete():
+    request_data = request.get_json()
+    
+    try:
+        quest_name = request_data['Quest']
+        quest_id = request_data['QuestRewardGrowth']
+        quest_marks = request_data['QuestRewardMarks']
+        player_name = request_data['PlayerName']
+        player_alderonid = request_data['PlayerAlderonId']
+        group_quest = request_data['GroupQuest']
+        
+        embed = discord.Embed(
+            title=f"Quest Complete",
+            description=f"{player_name} ({player_alderonid}) has completed the quest: {quest_name}",
+            color=discord.Color.blurple()
+        )
+        
+        embed.add_field(
+            name="Rewards",
+            value=(
+                f"Growth: {quest_id}\n"
+                f"Marks: {quest_marks}\n"
+                f"Group Quest: {group_quest}"
+            ),
+            inline=False
+        )
+        
+        send_to_discord(embed=embed, webhook_url=WEBHOOKS['questcomplete'])
+        
+        return jsonify({"status": "success"}), 200
+    
+    except KeyError as e:
+        logging.error(f"Missing key: {str(e)}")
+        return jsonify({"error": f"Missing key: {str(e)}"}), 400
+
+    except Exception as e:
+        logging.error(f"Internal server error: {str(e)}")
+        return jsonify({"error": "Internal Server Error"}), 500
+    
+@app.route('/pot/questfailed', methods=['POST'])
+def questfailed():
+    request_data = request.get_json()
+    
+    try:
+        quest_name = request_data['Quest']
+        player_name = request_data['PlayerName']
+        player_alderonid = request_data['PlayerAlderonId']
+        group_quest = request_data['GroupQuest']
+        
+        embed = discord.Embed(
+            title=f"Quest Failed",
+            description=f"{player_name} ({player_alderonid}) has failed the quest: {quest_name}",
+            color=discord.Color.blurple()
+        )
+        
+        send_to_discord(embed=embed, webhook_url=WEBHOOKS['questfailed'])
+        
+        return jsonify({"status": "success"}), 200
+    
+    except KeyError as e:
+        logging.error(f"Missing key: {str(e)}")
+        return jsonify({"error": f"Missing key: {str(e)}"}), 400
+
+    except Exception as e:
+        logging.error(f"Internal server error: {str(e)}")
+        return jsonify({"error": "Internal Server Error"}), 500
+    
+@app.route('/pot/playerleave', methods=['POST'])
+def playerleave():
+    request_data = request.get_json()
+    
+    try:
+        player_name = request_data['PlayerName']
+        player_alderonid = request_data['PlayerAlderonId']
+        from_death = request_data['FromDeath']
+        safe_log = request_data['SafeLog']
+        character_name = request_data['CharacterName']
+        dinosaur_type = request_data['DinosaurType']
+        dinosaur_growth = request_data['DinosaurGrowth']
+        player_location = request_data['Location']
+        
+        embed = discord.Embed(
+            title=f"Player Leave",
+            description=f"{player_name} ({player_alderonid}) has left the server.",
+            color=discord.Color.blurple()
+        )
+        
+        embed.add_field(
+            name="Character",
+            value=(
+                f"Name: {character_name}\n"
+                f"Dinosaur: {dinosaur_type} ({dinosaur_growth})\n"
+                f"Location: {player_location}\n"
+                f"From Death: {from_death}\n"
+                f"Safe Log: {safe_log}"
+            ),
+            inline=False
+        )
+        
+        send_to_discord(embed=embed, webhook_url=WEBHOOKS['playerleave'])
+        
+        return jsonify({"status": "success"}), 200
+    
+    except KeyError as e:
+        logging.error(f"Missing key: {str(e)}")
+        return jsonify({"error": f"Missing key: {str(e)}"}), 400
+
+    except Exception as e:
+        logging.error(f"Internal server error: {str(e)}")
+        return jsonify({"error": "Internal Server Error"}), 500
+
     
 # def send_to_discord(embed=None, webhook_url=None):
 #     if not webhook_url:
