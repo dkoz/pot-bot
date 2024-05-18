@@ -257,7 +257,9 @@ def admincommand():
 
     try:
         admin_name = request_data['AdminName']
-        admin_id = request_data['AdminAlderonId']
+        admin_id = request_data.get('AdminAlderonId')
+        if not admin_id:
+            raise KeyError('AdminAlderonId is missing')
         admin_role = request_data['Role']
         admin_command = request_data['Command']
 
