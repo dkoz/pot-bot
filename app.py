@@ -22,8 +22,7 @@ WEBHOOKS = {
     'playerleave': settings.webhook_playerleave,
     'waystone': settings.webhook_waystone,
     'questcomplete': settings.webhook_questcomplete,
-    'questfailed': settings.webhook_questfailed,
-    # 'restart': settings.webhook_restart,
+    'questfailed': settings.webhook_questfailed
 }
 
 def get_db():
@@ -433,13 +432,14 @@ def playerreport():
         
         embed = discord.Embed(
             title=f"Player Report - {server_name}",
-            description=f"{reporter_name} ({reporter_alderon_id}) reported {reported_name} ({reported_alderon_id}).",
+            description=f"{reporter_name} ({reporter_alderon_id}) has submitted a report on {platform}.",
             color=discord.Color.blurple()
         )
         
         embed.add_field(
             name="Report",
             value=(
+                f"Reported: {reported_name} ({reported_alderon_id})\n"
                 f"Title: {title}\n"
                 f"Type: {report_type}\n"
                 f"Reason: {report_reason}\n"
@@ -447,20 +447,19 @@ def playerreport():
                 f"Platform: {reported_platform}\n"
                 f"Location: {location}\n"
                 f"Version: {version}\n"
-                f"Platform: {platform}"
             ),
             inline=False
         )
         
         embed.add_field(
             name="Recent Damage Causers",
-            value=", ".join(recent_damage_causer_ids),
+            value=", ".join(recent_damage_causer_ids) if recent_damage_causer_ids else "None reported",
             inline=False
         )
-        
+
         embed.add_field(
             name="Nearby Players",
-            value=", ".join(nearby_player_ids),
+            value=", ".join(nearby_player_ids) if nearby_player_ids else "None reported",
             inline=False
         )
         
@@ -621,62 +620,7 @@ def playerleave():
     except Exception as e:
         logging.error(f"Internal server error: {str(e)}")
         return jsonify({"error": "Internal Server Error"}), 500
-
     
-# def send_to_discord(embed=None, webhook_url=None):
-#     if not webhook_url:
-#         webhook_url = DISCORD_WEBHOOK_URL
-
-#     payload = {}
-#     if embed:
-#         payload["embeds"] = [embed.to_dict()]
-
-#     try:
-#         response = requests.post(webhook_url, json=payload)
-#         response.raise_for_status()
-#     except requests.RequestException as e:
-#         logging.error(f"Error sending to Discord: {e}")
-
-# @app.route('/pot/restart', methods=['POST'])
-# def restart():
-#     request_data = request.get_json()
-
-#     try:
-#         restart_time = int(request_data['RestartTimeRemaining'])
-
-#         if restart_time == 600:
-#             message = "The server will restart in 10 minutes."
-#         elif restart_time == 300:
-#             message = "The server will restart in 5 minutes."
-#         elif restart_time == 120:
-#             message = "The server will restart in 2 minutes."
-#         elif restart_time == 60:
-#             message = "The server will restart in 1 minute."
-#         elif restart_time == 30:
-#             message = "The server will restart in 30 seconds."
-#         elif restart_time == 10:
-#             message = "The server will restart in 10 seconds."
-#         elif restart_time == 1:
-#             message = "Server has restarted!"
-
-#         embed = discord.Embed(
-#             title="Server Restart",
-#             description=message,
-#             color=discord.Color.blurple(),
-#         )
-
-#         send_to_discord(embed=embed, webhook_url=WEBHOOKS['restart'])
-
-#         return jsonify({"status": "success"}), 200
-
-#     except KeyError as e:
-#         logging.error(f"Missing key: {str(e)}")
-#         return jsonify({"error": f"Missing key: {str(e)}"}), 400
-
-#     except Exception as e:
-#         logging.error(f"Internal server error: {str(e)}")
-#         return jsonify({"error": "Internal Server Error"}), 500
-
 @app.teardown_appcontext
 def close_db(exception=None):
     db = g.pop('db', None)
@@ -684,4 +628,4 @@ def close_db(exception=None):
         db.close()
 
 if __name__ == '__main__':
-    app.run(debug=True, host=settings.app_host, port=settings.app_port)
+    app.run(host=settings.app_host, port=settings.app_port)
