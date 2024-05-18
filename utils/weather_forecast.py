@@ -27,6 +27,33 @@ weather_emojis = {
     "snow": "https://cdn2.iconfinder.com/data/icons/weather-color-2/500/weather-24-512.png"
 }
 
+season_descriptions = {
+    "wet": [
+        "The heavens open up, drenching the landscape. Adapt to the wet conditions and witness the world transform into a vibrant, waterlogged haven! 🌧️🦕",
+        "Rainfall breathes life into the rivers, creating a thriving ecosystem. Dive into the wet season's adventure! 💦🌿",
+        "Mud puddles abound as rain showers paint the environment in shades of green. Embrace the challenge and beauty of the wet season! 🌧️🍃",
+        "The rhythmic sound of raindrops fills the air. Explore the lush, wet world as the wet season unfolds! 🌧️🌳"
+    ],
+    "dry": [
+        "Feel the scorching sun and witness the landscape shimmer in the heat. Stay cool and hydrated as the dry season challenges your survival! ☀️🏜️",
+        "Dust clouds rise with each step in the arid heat. Seek shade and navigate the challenges of the dry season's relentless sun. 🌞🦴",
+        "Under the blazing sun, the land transforms into a desert oasis. Adapt to the dry season's trials and embrace the arid beauty. 🌵☀️",
+        "Waves of heat distort the horizon as the dry season takes hold. Conquer the challenges and discover the secrets of the parched landscape. 🌞🔥"
+    ],
+    "temperate": [
+        "Mild temperatures create the perfect setting for exploration. Venture out and savor the tranquility of the temperate season! 🍃🌤️",
+        "Gentle breezes carry whispers of adventure through the temperate landscape. Embark on a journey in this ideal season for exploration. 🌳🌞",
+        "Under a sunlit sky, enjoy the beauty of the temperate season. Discover the wonders of nature as you traverse this harmonious environment. 🌞🌳",
+        "Balmy temperatures invite you to explore the temperate wonderland. Revel in the calm and beauty of the season's embrace. 🍂🌤️"
+    ],
+    "cold": [
+        "Snow blankets the ground, turning the world into a winter wonderland. Adapt to the cold and embrace the challenges of the snowy landscape. ❄️⛄",
+        "Frosty air and falling snowflakes transform the world into a serene winter realm. Experience the magic of the cold season's snowy landscapes. 🌨️❄️",
+        "The crunch of snow beneath your feet echoes through the tranquil cold season. Navigate the challenges and uncover the secrets of the frozen landscape. ❄️🦕",
+        "Breathe in the crisp, wintry air as the cold season unfolds. Survive and thrive in the snowy wilderness of this prehistoric world. ☃️❄️"
+    ]
+}
+
 def get_weather_update(season):
     weather_options = weather_probabilities[season]
     weights = [weight for _, weight in weather_options]

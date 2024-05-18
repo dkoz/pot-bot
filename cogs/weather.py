@@ -3,10 +3,11 @@ import discord
 from discord.ext import commands, tasks
 from discord import app_commands
 from utils.rcon_protocol import rcon_command
-from utils.weather_forecast import get_weather_update, weather_emojis
+from utils.weather_forecast import get_weather_update, weather_emojis, season_descriptions
 import asyncio
 import os
 import logging
+import random
 
 class WeatherControlCog(commands.Cog):
     def __init__(self, bot):
@@ -14,7 +15,6 @@ class WeatherControlCog(commands.Cog):
         self.server_config = self.load_config()
         self.data_path = os.path.join('data', 'season.json')
         self.current_season, self.current_server = self.load_season()
-        self.weather_channel = None
         self.forecast_channel = None
         self.pattern_channel = None
         self.weather_task = None
@@ -22,9 +22,11 @@ class WeatherControlCog(commands.Cog):
 
     async def init_channels(self):
         await self.bot.wait_until_ready()
-        self.weather_channel = self.bot.get_channel(self.server_config["WEATHER_CHANNEL"])
         self.forecast_channel = self.bot.get_channel(self.server_config["WEATHER_FORECAST"])
         self.pattern_channel = self.bot.get_channel(self.server_config["WEATHER_PATTERN"])
+        for channel in [self.forecast_channel, self.pattern_channel]:
+            if not isinstance(channel, discord.TextChannel):
+                logging.error(f"Channel {channel.name} is not a text channel.")
         if self.current_season and self.current_server:
             if self.weather_task is None:
                 self.weather_task = self.weather_update
@@ -36,7 +38,7 @@ class WeatherControlCog(commands.Cog):
         weather_message, selected_weather = get_weather_update(season)
 
         if self.pattern_channel:
-            new_pattern_name = f"Season: {season.capitalize()}"
+            new_pattern_name = f"║📅︱𝚂𝚎𝚊𝚜𝚘𝚗︱{season.capitalize()}"
             if self.pattern_channel.name != new_pattern_name:
                 await self.pattern_channel.edit(name=new_pattern_name)
 
@@ -104,6 +106,12 @@ class WeatherControlCog(commands.Cog):
 
         self.weather_task.start(server)
         await self.update_channels(self.current_season)
+
+        if self.pattern_channel:
+            embed_description = random.choice(season_descriptions[self.current_season.lower()])
+            embed = discord.Embed(title=f"Welcome to the {self.current_season} Season!", description=embed_description, color=discord.Color.blue())
+            await self.pattern_channel.send(embed=embed)
+
         await interaction.response.send_message(f"Weather pattern set to {self.current_season} on {server}.")
 
     @tasks.loop(minutes=5)
@@ -114,22 +122,22 @@ class WeatherControlCog(commands.Cog):
 
         weather_message, selected_weather = get_weather_update(self.current_season)
 
-        if self.weather_channel:
+        if self.forecast_channel:
             embed = discord.Embed(title=f"Weather on Panjura", description=weather_message, color=discord.Color.blue())
             emoji_url = weather_emojis.get(selected_weather, "")
             if emoji_url:
                 embed.set_thumbnail(url=emoji_url)
-            await self.weather_channel.send(embed=embed)
+            await self.forecast_channel.send(embed=embed)
 
         await asyncio.sleep(13)
 
-        new_name = f"Forecast: {selected_weather.capitalize()}"
-        if self.forecast_channel and self.forecast_channel.name != new_name:
-            try:
-                await self.forecast_channel.edit(name=new_name)
-                logging.info("Forecast channel name updated successfully.")
-            except discord.HTTPException as e:
-                logging.error(f"Failed to edit channel name due to rate limiting or other HTTP issue: {e}")
+        if self.forecast_channel:
+            new_forecast_name = f"║🌤️︱𝙵𝚘𝚛𝚎𝚌𝚊𝚜𝚝︱{selected_weather.capitalize()}"
+            if self.forecast_channel.name != new_forecast_name:
+                try:
+                    await self.forecast_channel.edit(name=new_forecast_name)
+                except discord.HTTPException as e:
+                    logging.error(f"Failed to edit channel name due to HTTP issue: {e}")
 
         command = f"weather {selected_weather}"
         await rcon_command(self.server_config, server, command)
