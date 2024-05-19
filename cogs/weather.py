@@ -18,6 +18,7 @@ class WeatherControlCog(commands.Cog):
         self.forecast_channel = None
         self.pattern_channel = None
         self.weather_task = None
+        self.last_forecast_name = None
         self.bot.loop.create_task(self.init_channels())
 
     async def init_channels(self):
@@ -131,13 +132,13 @@ class WeatherControlCog(commands.Cog):
 
         await asyncio.sleep(13)
 
-        if self.forecast_channel:
-            new_forecast_name = f"║🌤️︱𝙵𝚘𝚛𝚎𝚌𝚊𝚜𝚝︱{selected_weather.capitalize()}"
-            if self.forecast_channel.name != new_forecast_name:
-                try:
-                    await self.forecast_channel.edit(name=new_forecast_name)
-                except discord.HTTPException as e:
-                    logging.error(f"Failed to edit channel name due to HTTP issue: {e}")
+        new_forecast_name = f"║🌤️︱𝙵𝚘𝚛𝚎𝚌𝚊𝚜𝚝︱{selected_weather.capitalize()}"
+        if self.forecast_channel.name != new_forecast_name and self.last_forecast_name != new_forecast_name:
+            self.last_forecast_name = new_forecast_name
+            try:
+                await self.forecast_channel.edit(name=new_forecast_name)
+            except discord.HTTPException as e:
+                logging.error(f"Failed to edit channel name due to HTTP issue: {e}")
 
         command = f"weather {selected_weather}"
         await rcon_command(self.server_config, server, command)

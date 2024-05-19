@@ -21,7 +21,7 @@ class TimeOfDayCog(commands.Cog):
         if self.gametime_channel:
             self.update_gametime.start()
 
-    @tasks.loop(minutes=7)
+    @tasks.loop(minutes=15)
     async def update_gametime(self):
         await asyncio.sleep(5)
         server_info = await rcon_command(self.config, "Dev Server", "ServerInfo")

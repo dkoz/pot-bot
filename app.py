@@ -256,12 +256,10 @@ def admincommand():
     request_data = request.get_json()
 
     try:
-        admin_name = request_data['AdminName']
-        admin_id = request_data.get('AdminAlderonId')
-        if not admin_id:
-            raise KeyError('AdminAlderonId is missing')
-        admin_role = request_data['Role']
-        admin_command = request_data['Command']
+        admin_name = request_data.get('AdminName', 'Unknown')
+        admin_id = request_data.get('AdminAlderonId', 'Unknown')
+        admin_role = request_data.get('Role', 'Unknown')
+        admin_command = request_data.get('Command', 'Unknown')
 
         embed = discord.Embed(
             title=f"Admin Command",

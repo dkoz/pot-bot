@@ -1,6 +1,7 @@
 import json
 import discord
 from discord.ext import commands
+import logging
 
 class WelcomeCog(commands.Cog):
     def __init__(self, bot):
@@ -36,24 +37,27 @@ class WelcomeCog(commands.Cog):
         if role:
             try:
                 await member.add_roles(role)
-                print(f"Assigned {role.name} to {member.display_name}.")
+                logging.info(f"Assigned {role.name} to {member.display_name}.")
             except discord.errors.Forbidden:
-                print("I do not have permission to assign roles.")
+                logging.error("I do not have permission to assign roles.")
             except Exception as e:
-                print(f"Failed to assign role: {e}")
+                logging.error(f"Failed to assign role: {e}")
                 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
         departure_channel = self.bot.get_channel(self.departure_channel_id)
         if departure_channel:
-            embed = discord.Embed(
-                title=f"Goodbye {member.display_name}!",
-                description=f"**{member.name}** has left the server.",
-                color=discord.Color.blurple()
-            )
-            embed.set_thumbnail(url=member.avatar.url)
-            
-            await departure_channel.send(embed=embed)
+            try:
+                embed = discord.Embed(
+                    title=f"Goodbye {member.display_name}!",
+                    description=f"**{member.name}** has left the server.",
+                    color=discord.Color.blurple()
+                )
+                embed.set_thumbnail(url=member.avatar.url)
+                
+                await departure_channel.send(embed=embed)
+            except Exception as e:
+                logging.error(f"Failed to send departure message: {e}")
 
 async def setup(bot):
     await bot.add_cog(WelcomeCog(bot))
