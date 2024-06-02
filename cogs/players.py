@@ -85,6 +85,8 @@ class PlayerCog(commands.Cog):
 
         if player_profile:
             _, name, alderon_id, kills, deaths, dinosaur, location = player_profile
+            warning_points = self.db.get_warnings(interaction.user.id)
+
             embed = discord.Embed(
                 title=f"{name} ({alderon_id})",
                 color=discord.Color.blurple()
@@ -93,6 +95,7 @@ class PlayerCog(commands.Cog):
             embed.add_field(name="Deaths", value=deaths, inline=True)
             embed.add_field(name="Dinosaur", value=dinosaur, inline=True)
             embed.add_field(name="Location", value=location, inline=True)
+            embed.add_field(name="Warning Points", value=warning_points, inline=False)
             await interaction.response.send_message(embed=embed)
         else:
             await interaction.response.send_message("Player profile not found or incomplete.")

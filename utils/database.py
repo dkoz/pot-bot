@@ -32,6 +32,16 @@ class Database:
                 )
                 """
             )
+            # Create warning table if it doesn't exist
+            self.connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS warnings (
+                    discord_id INTEGER UNIQUE,
+                    name TEXT,
+                    warning_points INTEGER DEFAULT 0
+                )
+                """
+            )
 
     def insert_player(self, name: str, alderon_id: str):
         with self.connection:
@@ -136,3 +146,25 @@ class Database:
 
     def close(self):
         self.connection.close()
+
+    def add_or_update_warning(self, discord_id: int, name: str, points: int):
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT warning_points FROM warnings WHERE discord_id = ?", (discord_id,))
+        result = cursor.fetchone()
+        
+        if result:
+            # Update existing warning points without exceeding 25
+            new_points = min(25, result[0] + points)
+            cursor.execute("UPDATE warnings SET warning_points = ? WHERE discord_id = ?", (new_points, discord_id))
+        else:
+            # Insert new warning record
+            cursor.execute("INSERT INTO warnings (discord_id, name, warning_points) VALUES (?, ?, ?)", 
+                           (discord_id, name, min(25, points)))
+        
+        self.connection.commit()
+
+    def get_warnings(self, discord_id: int) -> int:
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT warning_points FROM warnings WHERE discord_id = ?", (discord_id,))
+        result = cursor.fetchone()
+        return result[0] if result else 0
