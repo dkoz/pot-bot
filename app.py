@@ -4,6 +4,9 @@ import requests
 import logging
 from utils.database import Database
 import settings
+import json
+import asyncio
+from utils.rcon_protocol import rcon_command
 
 app = Flask(__name__)
 
@@ -197,7 +200,7 @@ def killed():
 
         if db.get_player(victim_alderon_id):
             db.increment_stat(victim_alderon_id, 'deaths')
-            db.update_player(victim_alderon_id, dinosaur=victim_dinosaur_type,location=victim_location)
+            db.update_player(victim_alderon_id, dinosaur=victim_dinosaur_type, location=victim_location)
 
         if db.get_player(killer_alderon_id):
             db.increment_stat(killer_alderon_id, 'kills')
@@ -206,6 +209,35 @@ def killed():
             logging.warning("Killer not found in the database.")
 
         db.connection.commit()
+
+        # Fetch hunger levels for both killer and victim
+        server_config = load_config()
+        select_server = "Envirma"
+
+        async def fetch_hunger():
+            victim_hunger = await rcon_command(server_config, select_server, f"getattr {victim_alderon_id} Hunger")
+            victim_max_hunger = await rcon_command(server_config, select_server, f"getattr {victim_alderon_id} MaxHunger")
+            killer_hunger = await rcon_command(server_config, select_server, f"getattr {killer_alderon_id} Hunger")
+            killer_max_hunger = await rcon_command(server_config, select_server, f"getattr {killer_alderon_id} MaxHunger")
+            return victim_hunger, victim_max_hunger, killer_hunger, killer_max_hunger
+
+        victim_hunger, victim_max_hunger, killer_hunger, killer_max_hunger = asyncio.run(fetch_hunger())
+
+        try:
+            victim_hunger_value = float(victim_hunger.split('Property hunger is ')[-1].strip('.'))
+            victim_max_hunger_value = float(victim_max_hunger.split('Property maxhunger is ')[-1].strip('.'))
+            victim_hunger_percentage = (victim_hunger_value / victim_max_hunger_value) * 100
+            victim_hunger_display = "{}%".format(round(victim_hunger_percentage, 2))
+        except:
+            victim_hunger_display = 'Unknown'
+
+        try:
+            killer_hunger_value = float(killer_hunger.split('Property hunger is ')[-1].strip('.'))
+            killer_max_hunger_value = float(killer_max_hunger.split('Property maxhunger is ')[-1].strip('.'))
+            killer_hunger_percentage = (killer_hunger_value / killer_max_hunger_value) * 100
+            killer_hunger_display = "{}%".format(round(killer_hunger_percentage, 2))
+        except:
+            killer_hunger_display = 'Unknown'
 
         embed = discord.Embed(
             title=f"Player Killed",
@@ -223,7 +255,8 @@ def killed():
                 f"Admin: {victim_is_admin}\n"
                 f"Dinosaur: {victim_dinosaur_type} ({victim_growth})\n"
                 f"Location: {victim_poi}\n"
-                f"Coordinates: {victim_location}"
+                f"Coordinates: {victim_location}\n"
+                f"Hunger: {victim_hunger_display}"
             ),
             inline=False
         )
@@ -234,7 +267,8 @@ def killed():
                 f"Player: {killer_name} ({killer_alderon_id})\n"
                 f"Admin: {killer_is_admin}\n"
                 f"Dinosaur: {killer_dinosaur_type} ({killer_growth})\n"
-                f"Coordinates: {killer_location}"
+                f"Coordinates: {killer_location}\n"
+                f"Hunger: {killer_hunger_display}"
             ),
             inline=False
         )
@@ -250,6 +284,10 @@ def killed():
     except Exception as e:
         logging.error(f"Internal server error: {str(e)}")
         return jsonify({"error": "Internal Server Error"}), 500
+    
+def load_config():
+    with open('config.json', 'r') as f:
+        return json.load(f)
     
 @app.route('/pot/admincommand', methods=['POST'])
 def admincommand():
