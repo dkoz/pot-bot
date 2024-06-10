@@ -1,8 +1,8 @@
 import random
 
 weather_probabilities = {
-    "Wet": [("rain", 40), ("storm", 40), ("overcast", 10), ("fog", 5), ("cloudy", 5)],
-    "Dry": [("overcast", 10), ("fog", 10), ("cloudy", 10), ("clearsky", 70)],
+    "Wet": [("rain", 35), ("storm", 30), ("overcast", 10), ("fog", 10), ("cloudy", 90), ("clearsky", 5)],
+    "Dry": [("overcast", 10), ("fog", 5), ("rain", 5), ("cloudy", 5), ("clearsky", 75)],
     "Temperate": [("rain", 5), ("storm", 5), ("overcast", 10), ("fog", 10), ("cloudy", 20), ("clearsky", 50)],
     "Cold": [("rain", 0), ("storm", 0), ("overcast", 10), ("fog", 10), ("cloudy", 20), ("clearsky", 0), ("snow", 60)]
 }

@@ -261,6 +261,9 @@ def admincommand():
         admin_role = request_data.get('Role', 'Unknown')
         admin_command = request_data.get('Command', 'Unknown')
 
+        if admin_name == 'Remotely executed' or admin_id == 'Unknown':
+            return jsonify({"status": "ignored"}), 200
+
         embed = discord.Embed(
             title=f"Admin Command",
             description=f"{admin_name} ({admin_id}) used the command: {admin_command}",

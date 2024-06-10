@@ -41,14 +41,20 @@ class PlayerCog(commands.Cog):
                 _, name, alderon_id, kills, deaths, dinosaur, location = player_profile
                 avatar_url = interaction.user.avatar.url
                 
+                if deaths > 0:
+                    kd_ratio = round(kills / deaths, 2)
+                else:
+                    kd_ratio = kills
+                
                 embed = discord.Embed(
                     title=f"{name} ({alderon_id})",
                     color=discord.Color.blurple()
                 )
                 embed.add_field(name="Kills", value=kills, inline=True)
                 embed.add_field(name="Deaths", value=deaths, inline=True)
-                embed.add_field(name="Dinosaur", value=dinosaur, inline=True)
-                embed.add_field(name="Location", value=location, inline=True)
+                embed.add_field(name="K/D", value=kd_ratio, inline=True)
+                embed.add_field(name="Dinosaur", value=dinosaur, inline=False)
+                embed.add_field(name="Last Location", value=location, inline=False)
                 embed.set_thumbnail(url=avatar_url)
                 await interaction.response.send_message(embed=embed)
             else:
