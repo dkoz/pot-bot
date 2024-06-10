@@ -22,12 +22,13 @@ class RewardsCog(commands.Cog):
         for server_name in self.server_config["RCON_SERVERS"]:
             try:
                 response = await rcon_command(self.server_config, server_name, "listplayers")
-                player_lines = response.split('\n')[1:]  # Skip the first line
+                player_lines = response.split('\n')[1:]
 
                 for line in player_lines:
                     if line.strip():
                         player_name = line.split(' ')[0]
                         await rcon_command(self.server_config, server_name, f"addmarks {player_name} {marks_amount}")
+                        await rcon_command(self.server_config, server_name, f"whisper {player_name} You have been awarded {marks_amount} for being active!")
                         print(f"Gave {marks_amount} marks to {player_name} on {server_name}")
                         await asyncio.sleep(marks_delay)
             except Exception as e:
