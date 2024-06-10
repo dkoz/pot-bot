@@ -8,6 +8,7 @@ class RewardsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.server_config = self.load_config()
+        self.ready = False
         self.give_marks.start()
 
     def load_config(self):
@@ -16,6 +17,10 @@ class RewardsCog(commands.Cog):
 
     @tasks.loop(minutes=60)
     async def give_marks(self):
+        if not self.ready:
+            self.ready = True
+            return
+
         marks_amount = self.server_config["MARKS_AMOUNT"]
         marks_delay = self.server_config["MARKS_DELAY"]
 
@@ -28,7 +33,7 @@ class RewardsCog(commands.Cog):
                     if line.strip():
                         player_name = line.split(' ')[0]
                         await rcon_command(self.server_config, server_name, f"addmarks {player_name} {marks_amount}")
-                        await rcon_command(self.server_config, server_name, f"whisper {player_name} You have been awarded {marks_amount} for being active!")
+                        await rcon_command(self.server_config, server_name, f"whisper {player_name} You have been awarded {marks_amount} marks for being active!")
                         print(f"Gave {marks_amount} marks to {player_name} on {server_name}")
                         await asyncio.sleep(marks_delay)
             except Exception as e:
