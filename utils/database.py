@@ -8,7 +8,6 @@ class Database:
 
     def create_tables(self):
         with self.connection:
-            # Create players table if it doesn't exist
             self.connection.execute(
                 """
                 CREATE TABLE IF NOT EXISTS players (
@@ -22,7 +21,6 @@ class Database:
                 )
                 """
             )
-            # Create link table if it doesn't exist
             self.connection.execute(
                 """
                 CREATE TABLE IF NOT EXISTS link (
@@ -32,7 +30,6 @@ class Database:
                 )
                 """
             )
-            # Create warning table if it doesn't exist
             self.connection.execute(
                 """
                 CREATE TABLE IF NOT EXISTS warnings (
@@ -153,11 +150,9 @@ class Database:
         result = cursor.fetchone()
         
         if result:
-            # Update existing warning points without exceeding 25
             new_points = min(25, result[0] + points)
             cursor.execute("UPDATE warnings SET warning_points = ? WHERE discord_id = ?", (new_points, discord_id))
         else:
-            # Insert new warning record
             cursor.execute("INSERT INTO warnings (discord_id, name, warning_points) VALUES (?, ?, ?)", 
                            (discord_id, name, min(25, points)))
         

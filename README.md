@@ -3,14 +3,16 @@
 
  A Path of Titans discord bot designed to allow remote rcon between multiple servers using my asynchronous rcon protocol.
 
- I made this to test my rcon protocol. I probably won't develop this any further unless there's some interest. Feel free to join my [discord](https://discord.gg/3HUq8cJSrX).
+ This bot was designed for a server called Envirma. I don't have time to develop this any further. Fork it and use it if you want. Feel free to join my [discord](https://discord.gg/3HUq8cJSrX).
 
-## Environment Variables
-You need to rename the `.env.example` to `.env` when you fill out the required fields.
-```
-BOT_TOKEN='TOKEN_HERE'
-BOT_PREFIX=!
-```
+## Features
+- RCON Control
+- Webhook Server
+- Leaderboards
+- Weather System
+- Server Monitor
+- Alderon ID
+- Player Profiles
 
 ## Server Configuration
 This is an example RCON configuration for your servers.
@@ -24,10 +26,7 @@ This is an example RCON configuration for your servers.
             "SERVER_PORT": 7777,
             "QUERY_PORT": 7778
         }
-    },
-    "WEATHER_CHANNEL": 12345678,
-    "WEATHER_REPORT": 12345678,
-    "WEATHER_PATTERN": 12345678
+    }
 }
 ```
 ## Installation
